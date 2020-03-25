@@ -1,4 +1,4 @@
-# Climate REanalysis Maps (CREAM)
+# Climate REanalysis Analysis and Maps (CREAM)
 
 This is a coding project within the scope of the Advanced Scientific Programming Course at Uppsala University. 
 The aim is to **create a python package cream**, which can be used to search for, download, manipulate and plot climate reanalysis data 
