@@ -23,7 +23,7 @@ class ERA5(object):
     Attributes:
     -----------
     product(str): supported products are land, single-level, pressure-levels
-    resolution(str): hourly or monthly 
+    resolution(str): hourly or monthly
     variables(list): list with ERA5 variable(s) (check https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation for all available variables)
     domain(str): select region with "lat2/lon1/lat1/lon2", if None: global data is downloaded
     path(str): name of directory where data download is stored: cache/
@@ -74,20 +74,29 @@ class ERA5(object):
         # select all months, days and hours if not specifies
         if months == None:
             months=   list(np.arange(1,13).astype(str))
+            m = ''
+        else:
+            m= '_months' + ''.join(months)
 
         if days == None:
             days =  list(np.arange(1,32).astype(str))
+            d= ''
+        else:
+             d= '_days' + ''.join(months) 
 
         if hours == None:
             hours = list(np.arange(0,24).astype(str))
+            h= ''
+        else:
+            h = '_hours' + ''.join(months)
 
         # download data for each year
         for year in years:
-            filename= 'era5_'+ downloadkey +'_'+ year +  '.nc'
+            filename= 'era5_'+ downloadkey +'_'+ year + m + d + h + '.nc'
             filepath = os.path.join(self.path, filename)
 
             # check whether file already has been downloaded
-            if os.path.exists('cache/'+filename) == True:
+            if os.path.exists(filepath) == True:
                 print('omittted download for ', filename)
 
             else:
@@ -127,34 +136,117 @@ class ERA5(object):
             filename = 'era5_'+ self.product+'_'+ year + month + day + hour+ '.nc'
             filepath = os.path.join(self.path, filename)
 
-            # Send request (download data)
-            c.retrieve('reanalysis-era5-'+self.product, {
-                "product_type":   "reanalysis",
-                "format":         "netcdf",
-                "area":           self.domain,
-                "variable":       self.variables,
-                "year":           [year],
-                "month":          [month],
-                "day":            [day],
-                "time":           [hour]
-            }, filepath)
+            # check whether file already has been downloaded
+            if os.path.exists(filepath) == True:
+                print('omittted download for ', filename)
 
-            print('file downloaded and saved as', filepath)
+            else:
+                # Send request (download data)
+                c.retrieve('reanalysis-era5-'+self.product, {
+                    "product_type":   "reanalysis",
+                    "format":         "netcdf",
+                    "area":           self.domain,
+                    "variable":       self.variables,
+                    "year":           [year],
+                    "month":          [month],
+                    "day":            [day],
+                    "time":           [hour]
+                }, filepath)
 
-    # def get_data_for_range():
-
-
-
-
-
+                print('file downloaded and saved as', filepath)
 
 
+
+
+    def get_data_for_range(self,start, end):
+        """Download ERA5 for a given range.
+
+        Parameter:
+        ----------
+
+        start(datetime.datetime): start time
+        end(datetime.datetime): end time
+
+        """
+
+        # open new client instance
+        c = cdsapi.Client()
+        import itertools
+
+        downloadkey = self.product + '-monthly-means'
+
+        full_years_range = range(start.year + 1 , end.year)
+        full_years = list(itertools.chain.from_iterable(itertools.repeat(x, 12) for x in full_years_range))
+        all_months = np.arange(1,13).astype(str)
+
+        months_first_year = list(np.arange((start.month + 1),13 ).astype(str))
+        months_last_year =  list(np.arange(1, (end.month+1)).astype(str))
+
+        # create lists for years with months
+        years = [str(start.year)] * len(months_first_year) +  [str(f) for f in full_years]   +  [str(end.year)] * len(months_last_year) 
+        months = months_first_year +  [str(m) for m in all_months ]  * len(full_years_range) +  months_last_year
+
+        m_count = 1
+        for idx,month in enumerate(months):
+            year = years[idx]
+
+            filename = 'era5_'+ downloadkey +'_'+ year +  month + '.nc'
+            filepath = os.path.join(self.path, filename)
+
+            # check whether file already has been downloaded
+            if os.path.exists(filepath) == True:
+                print('omittted download for ', filename)
+
+            else:
+                if  m_count <= len(months_first_year):
+                    # API request for first year
+                    c.retrieve('reanalysis-era5-'+downloadkey, {
+                        "product_type":   "monthly_averaged_reanalysis",
+                        "format":         "netcdf",
+                        "area":           self.domain,
+                        "variable":       self.variables,
+                        "year":           [year],
+                        "month":          [month],
+                        "time":            ['00:00'],
+                    }, filepath)
+
+                    print('file downloaded and saved as', filepath)
+                    m_count += 1
+
+                if m_count > len(months_first_year) and m_count < len(all_months) - len(months_last_year):
+                    # API request for full years 
+                    c.retrieve('reanalysis-era5-'+ downloadkey , {
+                        "product_type":   "monthly_averaged_reanalysis",
+                        "format":         "netcdf",
+                        "area":           self.domain,
+                        "variable":       self.variables,
+                        "year":           [year],
+                        "month":          [month],
+                        "time":            ['00:00'],
+                    }, filepath)
+
+                    print('file downloaded and saved as', filepath)
+                    m_count += 1
+
+                else:
+                    # API request for last year
+                    c.retrieve('reanalysis-era5-'+ downloadkey , {
+                        "product_type":   "monthly_averaged_reanalysis",
+                        "format":         "netcdf",
+                        "area":           self.domain,
+                        "variable":       self.variables,
+                        "year":           [year],
+                        "month":          [month],
+                        "time":            ['00:00'],
+                    }, filepath)
+
+                    print('file downloaded and saved as', filepath)
 
 
 class Surface(ERA5):
     """
 
-    Surface is a child class of ERA5 data products, which describes products with surface or column-integrated data. Each timestep contains two-dimensional data points. 
+    Surface is a child class of ERA5 data products, which describes products with surface or column-integrated data. Each timestep contains two-dimensional data points.
 
     """
     def __init__(self):
