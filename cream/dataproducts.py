@@ -186,7 +186,6 @@ class ERA5(object):
         years = [str(start.year)] * len(months_first_year) +  [str(f) for f in full_years]   +  [str(end.year)] * len(months_last_year) 
         months = months_first_year +  [str(m) for m in all_months ]  * len(full_years_range) +  months_last_year
 
-        m_count = 1
         for idx,month in enumerate(months):
             year = years[idx]
 
@@ -198,7 +197,6 @@ class ERA5(object):
                 print('omittted download for ', filename)
 
             else:
-                if  m_count <= len(months_first_year):
                     # API request for first year
                     c.retrieve('reanalysis-era5-'+downloadkey, {
                         "product_type":   "monthly_averaged_reanalysis",
@@ -211,36 +209,7 @@ class ERA5(object):
                     }, filepath)
 
                     print('file downloaded and saved as', filepath)
-                    m_count += 1
 
-                if m_count > len(months_first_year) and m_count < len(all_months) - len(months_last_year):
-                    # API request for full years 
-                    c.retrieve('reanalysis-era5-'+ downloadkey , {
-                        "product_type":   "monthly_averaged_reanalysis",
-                        "format":         "netcdf",
-                        "area":           self.domain,
-                        "variable":       self.variables,
-                        "year":           [year],
-                        "month":          [month],
-                        "time":            ['00:00'],
-                    }, filepath)
-
-                    print('file downloaded and saved as', filepath)
-                    m_count += 1
-
-                else:
-                    # API request for last year
-                    c.retrieve('reanalysis-era5-'+ downloadkey , {
-                        "product_type":   "monthly_averaged_reanalysis",
-                        "format":         "netcdf",
-                        "area":           self.domain,
-                        "variable":       self.variables,
-                        "year":           [year],
-                        "month":          [month],
-                        "time":            ['00:00'],
-                    }, filepath)
-
-                    print('file downloaded and saved as', filepath)
 
 
 class Surface(ERA5):
