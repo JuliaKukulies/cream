@@ -4,7 +4,7 @@
 
 ## solve problems 
 
- - get data by range and/or for shorter time period 
+ - get data by range, also for hourly data 
 
 
 
@@ -19,9 +19,7 @@
 - plot synoptic 
 
 
-
-
 ## other 
 
-- documentation 
+- sphynx documentation 
 - test notebook 

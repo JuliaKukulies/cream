@@ -11,6 +11,7 @@ Pressure(ERA5):ERA5 data on 37 pressure levels (1000 hpa to 1 hpa) from ECMWF
 
 import cdsapi
 import os
+import datetime
 import numpy as np
 
 class ERA5(object):
@@ -76,23 +77,26 @@ class ERA5(object):
             months=   list(np.arange(1,13).astype(str))
             m = ''
         else:
+            # string for file name
             m= '_months' + ''.join(months)
 
         if days == None:
             days =  list(np.arange(1,32).astype(str))
             d= ''
         else:
+            # string for file name 
              d= '_days' + ''.join(months) 
 
         if hours == None:
             hours = list(np.arange(0,24).astype(str))
             h= ''
         else:
+            # string for filename 
             h = '_hours' + ''.join(months)
 
         # download data for each year
         for year in years:
-            filename= 'era5_'+ downloadkey +'_'+ year + m + d + h + '.nc'
+            filename= 'era5_'+ downloadkey +'_'+ year + m + d + h + '_' +''.join(self.variables) +  '.nc'
             filepath = os.path.join(self.path, filename)
 
             # check whether file already has been downloaded
@@ -133,7 +137,7 @@ class ERA5(object):
             day= str(composites['days'][i])
             hour= str(composites['hours'][i])
 
-            filename = 'era5_'+ self.product+'_'+ year + month + day + hour+ '.nc'
+            filename = 'era5_'+ self.product+'_'+ year + month + day + hour+'_' + ''.join(self.variables) + '.nc'
             filepath = os.path.join(self.path, filename)
 
             # check whether file already has been downloaded
@@ -173,42 +177,129 @@ class ERA5(object):
         c = cdsapi.Client()
         import itertools
 
-        downloadkey = self.product + '-monthly-means'
+        if self.resolution == 'monthly':
 
-        full_years_range = range(start.year + 1 , end.year)
-        full_years = list(itertools.chain.from_iterable(itertools.repeat(x, 12) for x in full_years_range))
-        all_months = np.arange(1,13).astype(str)
+            downloadkey = self.product + '-monthly-means'
 
-        months_first_year = list(np.arange((start.month + 1),13 ).astype(str))
-        months_last_year =  list(np.arange(1, (end.month+1)).astype(str))
+            # get years with complete nr. of months 
+            full_years_range = range(start.year + 1 , end.year)
+            full_years = list(itertools.chain.from_iterable(itertools.repeat(x, 12) for x in full_years_range))
+            all_months = np.arange(1,13).astype(str)
 
-        # create lists for years with months
-        years = [str(start.year)] * len(months_first_year) +  [str(f) for f in full_years]   +  [str(end.year)] * len(months_last_year) 
-        months = months_first_year +  [str(m) for m in all_months ]  * len(full_years_range) +  months_last_year
+            # get months of uncomplete years 
+            months_first_year = list(np.arange((start.month + 1),13 ).astype(str))
+            months_last_year =  list(np.arange(1, (end.month+1)).astype(str))
 
-        for idx,month in enumerate(months):
-            year = years[idx]
+            # create lists for years with months
+            years = [str(start.year)] * len(months_first_year) +  [str(f) for f in full_years]   +  [str(end.year)] * len(months_last_year) 
+            months = months_first_year +  [str(m) for m in all_months ]  * len(full_years_range) +  months_last_year
 
-            filename = 'era5_'+ downloadkey +'_'+ year +  month + '.nc'
-            filepath = os.path.join(self.path, filename)
+            for idx,month in enumerate(months):
+                year = years[idx]
+                filename = 'era5_'+ downloadkey +'_'+ year +  month +'_' + ''.join(variables) + '.nc'
+                filepath = os.path.join(self.path, filename)
 
-            # check whether file already has been downloaded
-            if os.path.exists(filepath) == True:
-                print('omittted download for ', filename)
+                # check whether file already has been downloaded
+                if os.path.exists(filepath) == True:
+                    print('omittted download for ', filename)
 
-            else:
-                    # API request for first year
-                    c.retrieve('reanalysis-era5-'+downloadkey, {
-                        "product_type":   "monthly_averaged_reanalysis",
-                        "format":         "netcdf",
-                        "area":           self.domain,
-                        "variable":       self.variables,
-                        "year":           [year],
-                        "month":          [month],
-                        "time":            ['00:00'],
-                    }, filepath)
+                else:
+                        # API request for specific year and month 
+                        c.retrieve('reanalysis-era5-'+downloadkey, {
+                            "product_type":   "monthly_averaged_reanalysis",
+                            "format":         "netcdf",
+                            "area":           self.domain,
+                            "variable":       self.variables,
+                            "year":           [year],
+                            "month":          [month],
+                            "time":            ['00:00'],
+                        }, filepath)
 
-                    print('file downloaded and saved as', filepath)
+                        print('file downloaded and saved as', filepath)
+
+
+        else:
+            # get list with all years, months, days, hours between two dates
+            delta =(end - start)
+            hour = delta/3600
+            dates = []
+            for i in range(hour.seconds + 1):
+                h = start + datetime.timedelta(hours=i)
+                dates.append(h)
+
+            for idx,date in enumerate(dates):
+                year = str(dates[idx].year)
+                month = str(dates[idx].month)
+                day = str(dates[idx].day)
+                hour= str(dates[idx].hour) 
+
+                filename = 'era5_'+ self.product +'_'+ year +  month + day+ hour+ '_' + ''.join(self.variables) + '.nc'
+                filepath = os.path.join(self.path, filename)
+
+                # check whether file already has been downloaded
+                if os.path.exists(filepath) == True:
+                    print('omittted download for ', filename)
+
+                else:
+                        # API request for specific year and month 
+                        c.retrieve('reanalysis-era5-'+ self.product , {
+                            "product_type":   "reanalysis",
+                            "format":         "netcdf",
+                            "area":           self.domain,
+                            "variable":       self.variables,
+                            "year":           [year],
+                            "month":          [month],
+                            "day" :           [day],
+                            "time":           [hour],
+                        }, filepath)
+
+                        print('file downloaded and saved as', filepath)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -220,6 +311,10 @@ class Surface(ERA5):
     """
     def __init__(self):
         ERA5.__init__(self, product, variables, domain, dimension)
+
+
+
+
 
 
 
