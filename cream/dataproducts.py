@@ -13,6 +13,13 @@ import cdsapi
 import os
 import datetime
 import numpy as np
+import xarray
+
+
+# import modules from the cream package
+from cream import plotting
+
+
 
 class ERA5(object):
     """
@@ -84,14 +91,14 @@ class ERA5(object):
             days =  list(np.arange(1,32).astype(str))
             d= ''
         else:
-            # string for file name 
-             d= '_days' + ''.join(months) 
+            # string for file name
+             d= '_days' + ''.join(months)
 
         if hours == None:
             hours = list(np.arange(0,24).astype(str))
             h= ''
         else:
-            # string for filename 
+            # string for filename
             h = '_hours' + ''.join(months)
 
         # download data for each year
@@ -125,17 +132,17 @@ class ERA5(object):
         Parameter:
         ----------
 
-        composites(dict): dictionary with years, months, days and hours in datetime format for timesteps
+        composites: list with timesteps asy,  dateime format (containing year, month, day, hour for each timestep)
 
         """
         # open new client instance
         c = cdsapi.Client()
 
-        for i,year in enumerate(composites['years']):
-            year = str(year)
-            month= str(composites['months'][i])
-            day= str(composites['days'][i])
-            hour= str(composites['hours'][i])
+        for i in np.arange(0,len(composites)):
+            year= str(composites[i].year)
+            month= str(composites[i].month)
+            day= str(composites[i].day)
+            hour= str(composites[i].hour)
 
             filename = 'era5_'+ self.product+'_'+ year + month + day + hour+'_' + ''.join(self.variables) + '.nc'
             filepath = os.path.join(self.path, filename)
@@ -258,51 +265,6 @@ class ERA5(object):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Surface(ERA5):
     """
 
@@ -310,24 +272,40 @@ class Surface(ERA5):
 
     """
     def __init__(self):
-        ERA5.__init__(self, product, variables, domain, dimension)
-
-
-
-
-
-
-
+        ERA5.__init__(self, product, variables, domain, path)
 
 
 class Pressure(ERA5):
     """
-    Pressure a child class of ERA5 data products, which describes data at different pressure levels in the atmosphere. Each timestep contains three-dimensional data points. 
-
+    Pressure a child class of ERA5 data products, which describes data at different pressure levels in the atmosphere. Each timestep contains three-dimensional data points.
 
     """
-    def __init__(self):
-        ERA5.__init__(self, product, variables, domain, dimension)
+    def __init__(self, fname, variables, domain):
+        ERA5.__init__(self, 'pressure-levels', variables, domain)
+        self.fname = fname
+
+        # read in data
+        path_to_file = os.path.join(self.path, self.fname)
+        data = xarray.open_dataset(path_to_file)
+
+        # extract data from file 
+        self.lons = data.longitude.values
+        self.lats = data.latitude.values
+        self.time= data.time.values[0]
+        self.data = {}
+        for name in variables:
+            self.data[name] = data[name].values[0,:,:,:]
+
+
+    def create_synoptic_plot(self,  pl, out = None ):
+        try:
+            u = self.data['u']
+            v= self.data['v']
+            geopotential= self.data['z']
+        except:
+            raise "pressure data does not contain wind vectors and/or geopotential data!"
+        plotting.plot_synoptic( self.lons, self.lats, u, v, geopotential, pl)
+
 
 
 
