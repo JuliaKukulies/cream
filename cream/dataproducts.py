@@ -21,11 +21,9 @@ from cream import plotting
 
 
 
-class ERA5(object):
+class ERA5():
     """
-    Base class for ERA5 data products.
-
-    This class provides an interface to facilitate the download of ERA5 data products from Copernicus. 
+    Class for with metadata for different ERA5 data products. This class provides an interface to facilitate the download of ERA5 data products from the Copernicus server. 
 
 
     Attributes:
@@ -33,11 +31,12 @@ class ERA5(object):
     product(str): supported products are land, single-level, pressure-levels
     resolution(str): hourly or monthly
     variables(list): list with ERA5 variable(s) (check https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation for all available variables)
-    domain(str): select region with "lat2/lon1/lat1/lon2", if None: global data is downloaded
+    domain(list): list with strings to select region  [lat2,lon1,lat1,lon2], if None: global data is downloaded
     path(str): name of directory where data download is stored: cache/
+    files(list): list with file paths, once the data for a specific data product and subsetting is has been downloaded 
     """
 
-    def __init__(self, product, variables, resolution, domain= None ):
+    def __init__(self, product, variables, resolution, domain= None):
         self.product = product
         self.resolution = resolution 
         self.variables = variables
@@ -50,6 +49,8 @@ class ERA5(object):
         self.path = 'cache'
         if os.path.isdir(self.path) ==  False :
             os.mkdir(self.path)
+
+        self.files = [] 
 
     def get_data_per_year(self, years, months = None, days = None, hours = None):
         """Downloads ERA5 data for a specific year or multiple years at hourly or monthly resolution. The output data is stored seperately for each year.
@@ -103,7 +104,7 @@ class ERA5(object):
 
         # download data for each year
         for year in years:
-            filename= 'era5_'+ downloadkey +'_'+ year + m + d + h + '_' +''.join(self.variables) +  '.nc'
+            filename= 'era5_'+ downloadkey +'_'+ year + m + d + h + '_' +''.join(self.variables) + '_' + ','.join(self.domain)+   '.nc'
             filepath = os.path.join(self.path, filename)
 
             # check whether file already has been downloaded
@@ -115,7 +116,7 @@ class ERA5(object):
                 c.retrieve('reanalysis-era5-'+ downloadkey , {
                     "product_type":   producttype,
                     "format":         "netcdf",
-                    "area":           self.domain, 
+                    "area":           '/'.join(self.domain), 
                     "variable":       self.variables,
                     "year":           year,
                     "month":          months,
@@ -124,6 +125,8 @@ class ERA5(object):
                 }, filepath)
 
                 print('file downloaded and saved as ', filepath)
+                self.files.append(filepath)
+
 
 
     def get_data_for_composites(self, composites):
@@ -144,7 +147,7 @@ class ERA5(object):
             day= str(composites[i].day)
             hour= str(composites[i].hour)
 
-            filename = 'era5_'+ self.product+'_'+ year + month + day + hour+'_' + ''.join(self.variables) + '.nc'
+            filename = 'era5_'+ self.product+'_'+ year + month + day + hour+'_' + ''.join(self.variables) +  '_' + ','.join(self.domain)+  '.nc'
             filepath = os.path.join(self.path, filename)
 
             # check whether file already has been downloaded
@@ -156,7 +159,7 @@ class ERA5(object):
                 c.retrieve('reanalysis-era5-'+self.product, {
                     "product_type":   "reanalysis",
                     "format":         "netcdf",
-                    "area":           self.domain,
+                    "area":            '/'.join(self.domain),
                     "variable":       self.variables,
                     "year":           [year],
                     "month":          [month],
@@ -165,6 +168,7 @@ class ERA5(object):
                 }, filepath)
 
                 print('file downloaded and saved as', filepath)
+                self.files.append(filepath)
 
 
 
@@ -182,8 +186,8 @@ class ERA5(object):
 
         # open new client instance
         c = cdsapi.Client()
-        import itertools
 
+        import itertools
         if self.resolution == 'monthly':
 
             downloadkey = self.product + '-monthly-means'
@@ -203,7 +207,7 @@ class ERA5(object):
 
             for idx,month in enumerate(months):
                 year = years[idx]
-                filename = 'era5_'+ downloadkey +'_'+ year +  month +'_' + ''.join(variables) + '.nc'
+                filename = 'era5_'+ downloadkey +'_'+ year +  month +'_' + ''.join(variables) + '_' + + ','.join(self.domain)+ '.nc'
                 filepath = os.path.join(self.path, filename)
 
                 # check whether file already has been downloaded
@@ -215,7 +219,7 @@ class ERA5(object):
                         c.retrieve('reanalysis-era5-'+downloadkey, {
                             "product_type":   "monthly_averaged_reanalysis",
                             "format":         "netcdf",
-                            "area":           self.domain,
+                            "area":            '/'.join(self.domain),
                             "variable":       self.variables,
                             "year":           [year],
                             "month":          [month],
@@ -223,7 +227,7 @@ class ERA5(object):
                         }, filepath)
 
                         print('file downloaded and saved as', filepath)
-
+                        self.files.append(filepath)
 
         else:
             # get list with all years, months, days, hours between two dates
@@ -240,7 +244,7 @@ class ERA5(object):
                 day = str(dates[idx].day)
                 hour= str(dates[idx].hour) 
 
-                filename = 'era5_'+ self.product +'_'+ year +  month + day+ hour+ '_' + ''.join(self.variables) + '.nc'
+                filename = 'era5_'+ self.product +'_'+ year +  month + day+ hour+ '_' + ''.join(self.variables) + '_' + ','.join(self.domain) +  '.nc'
                 filepath = os.path.join(self.path, filename)
 
                 # check whether file already has been downloaded
@@ -252,7 +256,7 @@ class ERA5(object):
                         c.retrieve('reanalysis-era5-'+ self.product , {
                             "product_type":   "reanalysis",
                             "format":         "netcdf",
-                            "area":           self.domain,
+                            "area":           '/'.join(self.domain),
                             "variable":       self.variables,
                             "year":           [year],
                             "month":          [month],
@@ -261,58 +265,92 @@ class ERA5(object):
                         }, filepath)
 
                         print('file downloaded and saved as', filepath)
+                        self.files.append(filepath)
 
 
 
 
-class Surface(ERA5):
+
+    def get_files(self):
+        import glob
+        self.files = glob.glob('cache/*'+ self.variables[0]+'*' + self.variables[-1] + '*_'+ ','.join(self.domain) + '.nc')
+        return self.files
+
+
+
+
+
+
+
+
+
+class Surface():
     """
 
-    Surface is a child class of ERA5 data products, which describes products with surface or column-integrated data. Each timestep contains two-dimensional data points.
+    The Surface class contains data with surface or column-integrated data, when reading in a netCDF file of ERA5. Each timestep contains two-dimensional data points.
+    The class is a child class of xarrray Dataset, which makes it possible to access all data, which is saved in the netcdf files from ERA5. 
+
+    Parameter:
+    ----------
+    xr_obj : xarray Dataset object
+
+    Attributes:
+    -------------
+    obj: is the data object of xarray Dataset with all its attributes. Data can be accessed the same way as for xarray Dataset objects via this attribute.
+
+
+    Examples to access xarray attributes:
+    ----------
+
+    self.obj.dims: dimensions of dataset 
+    self.obj.latitude.values : numpy array with latitude values
 
     """
-    def __init__(self):
-        ERA5.__init__(self, product, variables, domain, path)
+    def __init__(self,  xr_obj):
+        self.obj = xr_obj
 
 
-class Pressure(ERA5):
+    def create_wind_plot(self,  out = None ):
+        u = self.obj.u100.values[0,::]
+        v= self.obj.v100.values[0,::]
+        lons = self.obj.longitude.values
+        lats = self.obj.latitude.values
+        plotting.plot_surface_wind(lons, lats, u, v)
+
+
+
+class Pressure():
     """
-    Pressure a child class of ERA5 data products, which describes data at different pressure levels in the atmosphere. Each timestep contains three-dimensional data points.
+    The Pressure class contains data at different pressure levels in the atmosphere, when reading in a netCDF file of ERA5. Each timestep contains three-dimensional data points.
+    The class is a child class of xarrray Dataset, which makes it possible to access all data, which is saved in the netcdf files from ERA5. 
+
+    Parameter:
+    ----------
+    xr_obj : xarray Dataset object
+
+    Attributes:
+    -------------
+    obj: is the data object of xarray Dataset with all its attributes. Data can be accessed the same way as for xarray Dataset objects via this attribute.
+
+
+    Examples to access xarray attributes:
+    ----------
+
+    self.obj.dims: dimensions of dataset
+    self.obj.latitude.values : numpy array with latitude values
+
 
     """
-    def __init__(self, fname, variables, domain):
-        ERA5.__init__(self, 'pressure-levels', variables, domain)
-        self.fname = fname
-
-        # read in data
-        path_to_file = os.path.join(self.path, self.fname)
-        data = xarray.open_dataset(path_to_file)
-
-        # extract data from file 
-        self.lons = data.longitude.values
-        self.lats = data.latitude.values
-        self.time= data.time.values[0]
-        self.data = {}
-        for name in variables:
-            self.data[name] = data[name].values[0,:,:,:]
-
+    def __init__(self,  xr_obj):
+        self.obj = xr_obj
 
     def create_synoptic_plot(self,  pl, out = None ):
-        try:
-            u = self.data['u']
-            v= self.data['v']
-            geopotential= self.data['z']
-        except:
-            raise "pressure data does not contain wind vectors and/or geopotential data!"
-        plotting.plot_synoptic( self.lons, self.lats, u, v, geopotential, pl)
-
-
-
-
-
-
-
-
+        u = self.obj.u.values[0,::]
+        v= self.obj.v.values[0,::]
+        geopotential= self.obj.z.values[0,::]
+        lons = self.obj.longitude.values
+        lats = self.obj.latitude.values
+        plotting.plot_synoptic(lons, lats, u, v, geopotential, pl)
 
 
 

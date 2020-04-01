@@ -1,25 +1,30 @@
-# To do for cream package 
+# Progress for cream package: 
 
 
+## DONE 
 
-## solve problems 
+- class ERA5
+- class Pressure 
+- class Surface
 
- - get data by range, also for hourly data 
+- different download methods 
+- plot surface winds 
+- plot synopic environment 
+
+- tested all functions
 
 
+## TODO 
 
-## add functions 
 
-- calculate averages 
+- plot any variable at surface 
+- plot any variable at pressure level 
+- vertical profiles 
+- create timeseries, gif of timesteps 
+
+- calculate averages and column-integrated values 
 - calculate wind shear 
-
-- plot map for one timestep 
-- plot sequence 
-- plot wind 
-- plot synoptic 
-
-
-## other 
+- calculate flux convergence 
 
 - sphynx documentation 
-- test notebook 
+- python package index 
