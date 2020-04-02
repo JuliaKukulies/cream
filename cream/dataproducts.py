@@ -309,13 +309,48 @@ class Surface():
     def __init__(self,  xr_obj):
         self.obj = xr_obj
 
+    def get_coords(self):
+        """
+        Returns:
+
+        lons(float32): array with longitudes 
+        lats(float32): array with latitudes 
+
+        """
+        lons = self.obj.longitude.values
+        lats = self.obj.latitude.values
+        return lons, lats 
 
     def create_wind_plot(self,  out = None ):
+        """
+        This function creates a map with surface wind vectors and wind speeds from u and v wind components of surface data. 
+        """
         u = self.obj.u100.values[0,::]
         v= self.obj.v100.values[0,::]
         lons = self.obj.longitude.values
         lats = self.obj.latitude.values
         plotting.plot_surface_wind(lons, lats, u, v)
+
+
+    def create_map(self, variable, out = None):
+        """
+        This function creates a map of a any chosen climate variable from surface/ single-level data. 
+
+        Parameters:
+        ------------
+
+        var(str): short name of variable to plot 
+
+        """
+        lons = self.obj.longitude.values
+        lats = self.obj.latitude.values
+
+        var = self.obj[variable].values[0]
+        unit= str(self.obj[variable].units)
+        varname = str(self.obj[variable].long_name) 
+        plotting.plot_map(lons, lats, var,varname, unit, out = None )
+
+
 
 
 
@@ -344,7 +379,24 @@ class Pressure():
     def __init__(self,  xr_obj):
         self.obj = xr_obj
 
+
+    def get_coords(self):
+        """
+        Returns:
+
+        lons(float32): array with longitudes 
+        lats(float32): array with latitudes 
+
+        """
+
+        lons = self.obj.longitude.values
+        lats = self.obj.latitude.values
+        return lons, lats 
+
+
     def create_synoptic_plot(self,  pl, out = None ):
+        """ This function creates a synoptic map at a chosen pressure level to display upper-level wind circulation and geopotential height. 
+        """
         u = self.obj.u.values[0,::]
         v= self.obj.v.values[0,::]
         geopotential= self.obj.z.values[0,::]

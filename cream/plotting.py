@@ -12,7 +12,7 @@ import numpy as np
 
 
 def plot_surface_wind(lons, lats, u, v, out = None):
-    """This function creates a surface wind maps showing both wind vectors and wind speed.
+    """This function creates a surface wind map showing both wind vectors and wind speed.
 
     Parameter:
     ------------
@@ -64,7 +64,7 @@ def plot_surface_wind(lons, lats, u, v, out = None):
 
     # labels
     xlabels = np.linspace(int(np.min(lons)), int(np.max(lons)), 5)
-    ylabels = np.linspace(int(np.min(lats)), int(np.max(lats)) , 8)
+    ylabels = np.linspace(int(np.min(lats)), int(np.max(lats)) , 5)
     plt.xticks(xlabels, xlabels, fontsize=20)
     plt.yticks(ylabels,ylabels, fontsize=20)
     plt.xlabel('Lon $^\circ$E',  fontsize=25)
@@ -146,7 +146,7 @@ def plot_synoptic(lons, lats, u, v, geopotential, pl, out = None  ):
 
     # labels
     xlabels = np.linspace(int(np.min(lons)), int(np.max(lons)), 5)
-    ylabels = np.linspace(int(np.min(lats)), int(np.max(lats)) , 8)
+    ylabels = np.linspace(int(np.min(lats)), int(np.max(lats)) , 5)
 
 
     plt.xticks(xlabels, xlabels, fontsize=20)
@@ -162,6 +162,168 @@ def plot_synoptic(lons, lats, u, v, geopotential, pl, out = None  ):
 
     plt.savefig(os.path.join(plotdir, out))
     plt.show()
+
+
+
+
+def plot_map(lons, lats, var, varname, unit = None, out = None):
+    """This function creates a 2D map for any chosen climate variable.
+
+    Parameter:
+    ------------
+
+    lons (numpy.array) : longitudes of data object
+    lats (numpy.array) : latitudes of data object
+    var (numpy.array) : any climate variable for one timestep (2-dimensionsal)
+    varname (str): name of climate variables 
+
+    optional:
+
+    unit(str) : unit of climate variable 
+    out (str): name of output file
+    """
+
+
+    # create output directory for plots if not existing
+    plotdir = 'plots'
+    if os.path.isdir(plotdir) ==  False :
+            os.mkdir(plotdir)
+
+    plt.figure(figsize= (18,9))
+
+    # create axes
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    #ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats)- 5])
+
+    # adapt coordinates for global data
+    if np.shape(lons)[0] == 1440:
+        lons = lons - 180
+        var= np.hstack((var[:,720::], var[:,0:720])) 
+
+    # convert coords from 1d to 2d array
+    x,y = np.meshgrid(lons, lats)
+
+    # colormap
+    cmap = plt.cm.viridis_r
+    if 'temp' in varname:
+         cmap = plt.cm.coolwarm
+
+    # change displayed color range for any rain variables (due to right-skewed distribution)
+    if 'rain' in varname:
+        vmax = np.nanmean(var) + np.nanstd(var)
+
+    # Plot climate variable 
+    m = plt.pcolormesh(lons,lats, var, cmap = cmap, vmin= np.nanmin(var), vmax = np.nanmax(var))
+
+    # colorbar
+    if unit == None:
+        unit = " "
+    else:
+        unit = ' ('+ unit+ ')'
+
+    cmap=plt.cm.viridis
+    cbar= plt.colorbar(m, extend = 'both')
+    cbar.set_label(varname + unit , fontsize = 15)
+
+
+    # axis labels
+    xlabels = np.linspace(int(np.nanmin(lons)), int(np.nanmax(lons)), 5)
+    ylabels = np.linspace(int(np.nanmin(lats)), int(np.nanmax(lats)) , 5)
+    plt.xticks(xlabels, xlabels, fontsize=20)
+    plt.yticks(ylabels,ylabels, fontsize=20)
+    plt.xlabel('Lon $^\circ$E',  fontsize=25)
+    plt.ylabel('Lat $^\circ$N',  fontsize=25)
+
+    # add extra features
+    ax.coastlines()
+
+    if out == None:
+        out ='_'.join(varname) +'_map.png'
+
+    plt.savefig(os.path.join(plotdir, out))
+    plt.show()
+
+
+
+
+def plot_contours(lons, lats, var, varname, unit = None, out = None, filled = False):
+    """This function creates a 2D contour map of any chosen variable 
+
+    Parameter:
+    ------------
+
+    lons (numpy.array) : longitudes of data object
+    lats (numpy.array) : latitudes of data object
+    var (numpy.array) : any climate variable for one timestep (2-dimensionsal)
+    varname (str): name of climate variables 
+
+    optional:
+
+    unit(str) : unit of climate variable 
+    out (str): name of output file
+    filled (boolean): if True, contours are filled with colours, standard: contours are simple lines
+    levels (int): list or array with numbers and positions of contour lines/regions 
+    """
+
+
+    # create output directory for plots if not existing
+    plotdir = 'plots'
+    if os.path.isdir(plotdir) ==  False :
+            os.mkdir(plotdir)
+
+    plt.figure(figsize= (18,9))
+
+    # create axes
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats)- 5])
+
+    # convert coords to 2d array
+    x,y = np.meshgrid(lons, lats)
+
+    # colormap
+    cmap = plt.cm.plasma
+
+    if levels ==None:
+        levels = []
+
+    if filled == False:
+        # Plot climate variable
+        m = plt.contour(x, y,  var, levels, cmap = cmap)
+    if filled == True:
+        m = plt.contourf(x,y, var, levels, cmap = cmap)
+
+
+    # colorbar
+    if unit == None:
+        unit = " "
+    else:
+        unit = '('+ unit+ ')'
+
+    cmap=plt.cm.viridis
+    cbar= plt.colorbar(m, extend = 'both')
+    cbar.set_label(varname + unit , fontsize = 15)
+
+    # labels
+    xlabels = np.linspace(int(np.min(lons)), int(np.max(lons)), 5)
+    ylabels = np.linspace(int(np.min(lats)), int(np.max(lats)) , 5)
+    plt.xticks(xlabels, xlabels, fontsize=20)
+    plt.yticks(ylabels,ylabels, fontsize=20)
+    plt.xlabel('Lon $^\circ$E',  fontsize=25)
+    plt.ylabel('Lat $^\circ$N',  fontsize=25)
+
+    # add extra features
+    ax.coastlines()
+
+    if out == None:
+        out = '_'.join(varname) +'_contourmap.png'
+
+    plt.savefig(os.path.join(plotdir, out))
+    plt.show()
+
+
+
+    
+
 
 
 
