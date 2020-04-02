@@ -18,6 +18,7 @@ import xarray
 
 # import modules from the cream package
 from cream import plotting
+from cream import utils
 
 
 
@@ -269,15 +270,15 @@ class ERA5():
 
 
 
-
-
     def get_files(self):
         import glob
-        self.files = glob.glob('cache/*'+ self.variables[0]+'*' + self.variables[-1] + '*_'+ ','.join(self.domain) + '.nc')
+        if len(self.variables) > 1:
+            vars = self.variables[0]  + self.variables[-1]
+        else:
+            vars = self.variables[0]
+
+        self.files = glob.glob('cache/*'+ self.product  +'*' +  vars +'*'+ ','.join(self.domain) + '.nc')
         return self.files
-
-
-
 
 
 
@@ -391,7 +392,7 @@ class Pressure():
 
         lons = self.obj.longitude.values
         lats = self.obj.latitude.values
-        return lons, lats 
+        return lons, lats
 
 
     def create_synoptic_plot(self,  pl, out = None ):
@@ -403,6 +404,59 @@ class Pressure():
         lons = self.obj.longitude.values
         lats = self.obj.latitude.values
         plotting.plot_synoptic(lons, lats, u, v, geopotential, pl)
+
+
+
+
+    def create_map(self, variable, level, out = None):
+        """
+        This function creates a map of a any chosen climate variable from surface/ single-level data. 
+
+        Parameters:
+        ------------
+
+        var(str): short name of variable to plot 
+        level(str): pressure level or 'column-integrated' to calculated the mean value through the atmospheric column 
+
+
+        """
+        lons = self.obj.longitude.values
+        lats = self.obj.latitude.values
+
+        if level == 'column-integrated':
+            var = utils.column_integration(self.obj[variable].values[0],  self.obj.z.values[0])
+        else:
+            level_idx = np.where(self.obj.level.values== level)[0]
+            var = self.obj[variable].values[0, level_idx , :, :][0]
+
+        unit= str(self.obj[variable].units)
+        varname = str(self.obj[variable].long_name)
+        plotting.plot_map(lons, lats, var,varname, unit, out = None )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

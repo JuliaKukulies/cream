@@ -193,12 +193,15 @@ def plot_map(lons, lats, var, varname, unit = None, out = None):
 
     # create axes
     ax = plt.axes(projection=ccrs.PlateCarree())
-    #ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats)- 5])
 
     # adapt coordinates for global data
     if np.shape(lons)[0] == 1440:
         lons = lons - 180
-        var= np.hstack((var[:,720::], var[:,0:720])) 
+        var= np.hstack((var[:,720::], var[:,0:720]))
+    else:
+        # set extent for specific region 
+        ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats) - 10])
+
 
     # convert coords from 1d to 2d array
     x,y = np.meshgrid(lons, lats)
@@ -238,7 +241,8 @@ def plot_map(lons, lats, var, varname, unit = None, out = None):
     ax.coastlines()
 
     if out == None:
-        out ='_'.join(varname) +'_map.png'
+        out =''.join(varname) +'_map.png'
+
 
     plt.savefig(os.path.join(plotdir, out))
     plt.show()
@@ -322,7 +326,19 @@ def plot_contours(lons, lats, var, varname, unit = None, out = None, filled = Fa
 
 
 
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
