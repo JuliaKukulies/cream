@@ -10,7 +10,9 @@
 - different download methods 
 - plot surface winds 
 - plot synopic environment 
-- plot 2D map of any surface variable 
+- plot 2D map of any surface variable
+- plot 2D map of any pressure variable 
+- calculate column-integrated values and create map from it 
 
 - tested all implemented functions
 - create example notebook
@@ -18,13 +20,11 @@
 
 ## TODO 
 
-
-- plot any variable at pressure level 
+ 
 - vertical profiles/cross sections 
-- create timeseries, gif of timesteps 
 
-- calculate averages and column-integrated values 
-- handle timesteps 
+- create timeseries, gif of timesteps 
+- calculate averages and  handle timesteps 
 
 - calculate wind shear 
 - calculate flux convergence 
