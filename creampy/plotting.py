@@ -424,6 +424,8 @@ def plot_vertical(coords, p_levels, var, varname, xaxis, unit = None, out = None
     # axis labels
     xlabels = np.linspace(int(np.nanmin(coords)), int(np.nanmax(coords)), 5)
     ylabels = p_levels
+    plt.gca().invert_yaxis()
+
     plt.xticks(xlabels, xlabels, fontsize=20)
     plt.yticks(ylabels,ylabels, fontsize=20)
 
