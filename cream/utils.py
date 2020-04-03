@@ -34,7 +34,7 @@ def column_integration(values, z, ax = None ):
 
     values(float): 1D or multi-dimensional array with values of atmospheric variable at different pressure levels
     z(int): array with geopotential heights for values
-    axis = axis along which to integrated. The default is 0. 
+    axis = axis along which to integrated. The default is 0.
 
 
     Returns:
@@ -55,10 +55,50 @@ def column_integration(values, z, ax = None ):
 
 
 
-def time_avg(xr_obj):
-    """ This function averages all variables in xarray dataset along the time axis"""
+def dim_average(xr_obj, var, dim):
+    """ This function averages a climate variable from an xarray dataobject along a specified dimension.
+
+    Parameters:
+    -----------
+
+    xr_obj: xrray Dataset object
+    var (str): short name of variable in of xr_obj
+    dim (str): name of dimension over which the average should be taken
+
+
+    Returns:
+    --------
+
+    avg: array with reduced dimension, containing the averages along time, latitudes or longitudes 
+
+    """
+
+    data = xr_obj[var].values
+    ax = np.where(np.array(xr_obj[var].dims) == dim)[0][0]
+    avg = np.nanmean(data, axis = ax)
 
     return avg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

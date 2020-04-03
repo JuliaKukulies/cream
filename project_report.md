@@ -24,8 +24,8 @@ The following classes and methods have been implemented within the scope of the 
 - plot 2D map of any pressure variable 
 - calculate column-integrated values from pressure levels 
 - create maps with contour lines/regions 
-- create vertical cross sections along latitude or longitudes 
-
+- calculate averages along certain dimension (time, latitude or longitude)
+- create plot of vertical cross section along latitudes or longitudes 
 
 
 ### additional
@@ -33,8 +33,6 @@ The following classes and methods have been implemented within the scope of the 
 - tested all implemented functions
 - created example notebook
 - documentation with doc strings 
-- added package via PyPI (Python Package Index)
-
 
 
 # Future extensions of the package could be:
@@ -45,14 +43,18 @@ The following classes and methods have been implemented within the scope of the 
 ### general extensions 
  
  - add more dataproduct classes (e.g. other climate reanalyses or gridded observation datasets)
+ - more advances search functions in data, e.g. check for and extract for specific datapoints at specific time and location 
  - add utilities to information from different datasets 
  - sphynx documentation 
+ - add package via PyPI (Python Package Index )
  
 
  
 ### methods
  
-- create timeseries, gif of timesteps 
+ 
+- create timeseries, animation of consecutive timesteps 
+- more time handling utilities, calculate seasonal averages, etc (e.g. combine with some functions of command-line programm **Climate Data Operator**)
 - calculate averages and  handle timesteps 
 - calculate wind shear 
 - calculate moisture flux convergence 

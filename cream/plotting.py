@@ -339,7 +339,6 @@ def plot_contours(lons, lats, var, varname, unit = None, out = None, filled = Fa
 
 
 
-
     # colorbar
     if unit == None:
         unit = " "
@@ -370,6 +369,77 @@ def plot_contours(lons, lats, var, varname, unit = None, out = None, filled = Fa
 
 
 
+
+def plot_vertical(coords, p_levels, var, varname, xaxis, unit = None, out = None):
+    """This function creates a 2D map for any chosen climate variable.
+
+    Parameter:
+    ------------
+
+    coords (numpy.array) : latitudes or longitudes of data object
+    p_levels (numpy.array) : latitudes of data object
+    var (numpy.array) : any climate variable for one timestep (2-dimensionsal)
+    varname (str): name of climate variables
+    xaxis (str): 'lon' or 'lat' for latitudinal or longitudinal cross section 
+
+
+    optional:
+
+    unit(str) : unit of climate variable 
+    out (str): name of output file
+    """
+
+
+    # create output directory for plots if not existing
+    plotdir = 'plots'
+    if os.path.isdir(plotdir) ==  False :
+            os.mkdir(plotdir)
+
+    plt.figure(figsize= (18,9))
+
+    # colormap
+    cmap = plt.cm.viridis_r
+    if 'temp' in varname:
+         cmap = plt.cm.coolwarm
+
+    # change displayed color range for any rain variables (due to right-skewed distribution)
+    if 'rain' in varname:
+        vmax = np.nanmean(var) + np.nanstd(var)
+
+
+    # Plot climate variable
+    m = plt.pcolormesh(coords, p_levels, var, cmap = cmap, vmin= np.nanmin(var), vmax = np.nanmax(var))
+
+    # colorbar
+    if unit == None:
+        unit = " "
+    else:
+        unit = ' ('+ unit+ ')'
+
+    cmap=plt.cm.viridis
+    cbar= plt.colorbar(m, extend = 'both')
+    cbar.set_label(varname + unit , fontsize = 15)
+
+
+    # axis labels
+    xlabels = np.linspace(int(np.nanmin(coords)), int(np.nanmax(coords)), 5)
+    ylabels = p_levels
+    plt.xticks(xlabels, xlabels, fontsize=20)
+    plt.yticks(ylabels,ylabels, fontsize=20)
+
+    if xaxis == 'latitude':
+        plt.xlabel('Lon $^\circ$E',  fontsize=25)
+    if xaxis == 'longitude' :
+        plt.xlabel('Lat $^\circ$N',  fontsize=25)
+
+    plt.ylabel('Pressure level (hPa)',  fontsize=25)
+
+    if out == None:
+        out =''.join(varname) +'_vertical_crosssection.png'
+
+
+    plt.savefig(os.path.join(plotdir, out))
+    plt.show()
 
 
 

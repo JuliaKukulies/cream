@@ -29,7 +29,7 @@ class ERA5():
 
     Attributes:
     -----------
-    product(str): supported products are land, single-level, pressure-levels
+    product(str): supported products are land, single-level, pressure-level
     resolution(str): hourly or monthly
     variables(list): list with ERA5 variable(s) (check https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation for all available variables)
     domain(list): list with strings to select region  [lat2,lon1,lat1,lon2], if None: global data is downloaded
@@ -470,24 +470,69 @@ class Pressure():
 
 
 
+    def create_contour_map(self, variable, level,  out = None, filled= None, levels = None):
+        """
+        This function creates a map of a any chosen climate variable from surface/ single-level data. 
+
+        Parameters:
+        ------------
+
+        var(str): short name of variable to plot
+        level(str): pressure level or 'column-integrated' to calculated the mean value through the atmospheric column
+
+        optional:
+
+        filled (boolean): if True, contours with filled regions will be created. The default creates contour lines.
+        levels : array containing the variable values for which contours are drawn
+
+        """
+        lons = self.obj.longitude.values
+        lats = self.obj.latitude.values
+
+
+        if level == 'column-integrated':
+            var = utils.column_integration(self.obj[variable].values[0],  self.obj.z.values[0])
+        else:
+            level_idx = np.where(self.obj.level.values== level)[0]
+            var = self.obj[variable].values[0, level_idx , :, :][0]
+
+        var = self.obj[variable].values[0]
+        unit= str(self.obj[variable].units)
+        varname = str(self.obj[variable].long_name) 
+        plotting.plot_contours(lons, lats, var, varname, unit= unit, out = out , filled = filled, levels = levels)
 
 
 
 
+    def create_vertical_plot(self, variable, dim, unit = None, out = None):
+        """This function creates a 2D map for any chosen climate variable.
+
+        Parameter:
+        ------------
+
+        var (numpy.array) : any climate variable for one timestep (2-dimensionsal)
+        dim (str): 'longitude' or 'latitude' for latitudinal or longitudinal cross section 
 
 
+        optional:
+
+        unit(str) : unit of climate variable 
+        out (str): name of output file"""
 
 
+        p_levels = self.obj.level.values
 
+        if dim== 'latitude':
+            coords = self.obj.latitude.values
+        if dim == 'longitude':
+            coords = self.obj.latitude.values
 
+        var = utils.dim_average(self.obj, variable, dim)
+        var = var[0]
 
-
-
-
-
-
-
-
+        unit= str(self.obj[variable].units)
+        varname = str(self.obj[variable].long_name)
+        plotting.plot_vertical(coords, p_levels, var, varname, dim, unit = None, out = None)
 
 
 
