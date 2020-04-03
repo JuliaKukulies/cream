@@ -36,7 +36,17 @@ def plot_surface_wind(lons, lats, u, v, out = None):
 
     # create axes
     ax = plt.axes(projection=ccrs.PlateCarree())
-    ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats)- 5])
+
+
+    # adapt coordinates for global data
+    if np.shape(lons)[0] == 1440:
+        lons = lons - 180
+        var= np.hstack((var[:,720::], var[:,0:720]))
+    else:
+        # set extent for specific region 
+        ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats) - 10])
+
+
 
     cmap = plt.cm.magma_r
 
@@ -120,7 +130,16 @@ def plot_synoptic(lons, lats, u, v, geopotential, pl, out = None  ):
 
     # create axes
     ax = plt.axes(projection=ccrs.PlateCarree())
-    ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats)- 5])
+
+    # adapt coordinates for global data
+    if np.shape(lons)[0] == 1440:
+        lons = lons - 180
+        var= np.hstack((var[:,720::], var[:,0:720]))
+    else:
+        # set extent for specific region 
+        ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats) - 10])
+
+
 
     cmap = plt.cm.viridis
 
@@ -162,8 +181,6 @@ def plot_synoptic(lons, lats, u, v, geopotential, pl, out = None  ):
 
     plt.savefig(os.path.join(plotdir, out))
     plt.show()
-
-
 
 
 def plot_map(lons, lats, var, varname, unit = None, out = None):
@@ -250,7 +267,7 @@ def plot_map(lons, lats, var, varname, unit = None, out = None):
 
 
 
-def plot_contours(lons, lats, var, varname, unit = None, out = None, filled = False):
+def plot_contours(lons, lats, var, varname, unit = None, out = None, filled = False, levels = None):
     """This function creates a 2D contour map of any chosen variable 
 
     Parameter:
@@ -279,7 +296,15 @@ def plot_contours(lons, lats, var, varname, unit = None, out = None, filled = Fa
 
     # create axes
     ax = plt.axes(projection=ccrs.PlateCarree())
-    ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats)- 5])
+
+    # adapt coordinates for global data
+    if np.shape(lons)[0] == 1440:
+        lons = lons - 180
+        var= np.hstack((var[:,720::], var[:,0:720]))
+    else:
+        # set extent for specific region 
+        ax.set_extent([np.min(lons),np.max(lons), np.min(lats), np.max(lats) - 10])
+
 
     # convert coords to 2d array
     x,y = np.meshgrid(lons, lats)
@@ -287,21 +312,39 @@ def plot_contours(lons, lats, var, varname, unit = None, out = None, filled = Fa
     # colormap
     cmap = plt.cm.plasma
 
-    if levels ==None:
-        levels = []
+    # colormap
+    cmap = plt.cm.viridis_r
+    if 'temp' in varname:
+         cmap = plt.cm.coolwarm
+
+    # change displayed color range for any rain variables (due to right-skewed distribution)
+    if 'rain' in varname:
+        vmax = np.nanmean(var) + np.nanstd(var)
+
+    if filled == None:
+        filled= False
+
 
     if filled == False:
         # Plot climate variable
-        m = plt.contour(x, y,  var, levels, cmap = cmap)
-    if filled == True:
-        m = plt.contourf(x,y, var, levels, cmap = cmap)
+        if levels == None:
+            m = plt.contour(x, y,  var, cmap = cmap, vmin= np.nanmin(var), vmax = np.nanmax(var))
+        else:
+             m = plt.contour(x, y,  var, levels, cmap = cmap, vmin= np.nanmin(var), vmax = np.nanmax(var))
+    else:
+        if levels == None:
+            m = plt.contourf(x,y, var, cmap = cmap, vmin= np.nanmin(var), vmax = np.nanmax(var))
+        else:
+            m = plt.contourf(x,y, var, levels, cmap = cmap, vmin= np.nanmin(var), vmax = np.nanmax(var))
+
+
 
 
     # colorbar
     if unit == None:
         unit = " "
     else:
-        unit = '('+ unit+ ')'
+        unit = ' ('+ unit+ ')'
 
     cmap=plt.cm.viridis
     cbar= plt.colorbar(m, extend = 'both')
@@ -319,7 +362,7 @@ def plot_contours(lons, lats, var, varname, unit = None, out = None, filled = Fa
     ax.coastlines()
 
     if out == None:
-        out = '_'.join(varname) +'_contourmap.png'
+        out = ''.join(varname) +'_contourmap.png'
 
     plt.savefig(os.path.join(plotdir, out))
     plt.show()

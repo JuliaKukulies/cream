@@ -193,22 +193,31 @@ class ERA5():
 
             downloadkey = self.product + '-monthly-means'
 
-            # get years with complete nr. of months 
-            full_years_range = range(start.year + 1 , end.year)
-            full_years = list(itertools.chain.from_iterable(itertools.repeat(x, 12) for x in full_years_range))
-            all_months = np.arange(1,13).astype(str)
+            if start.year != end.year:
 
-            # get months of uncomplete years 
-            months_first_year = list(np.arange((start.month + 1),13 ).astype(str))
-            months_last_year =  list(np.arange(1, (end.month+1)).astype(str))
+                # get years with complete nr. of months 
+                full_years_range = range(start.year + 1 , end.year)
+                full_years = list(itertools.chain.from_iterable(itertools.repeat(x, 12) for x in full_years_range))
+                all_months = np.arange(1,13).astype(str)
 
-            # create lists for years with months
-            years = [str(start.year)] * len(months_first_year) +  [str(f) for f in full_years]   +  [str(end.year)] * len(months_last_year) 
-            months = months_first_year +  [str(m) for m in all_months ]  * len(full_years_range) +  months_last_year
+                # get months of uncomplete years 
+                months_first_year = list(np.arange((start.month + 1),13 ).astype(str))
+                months_last_year =  list(np.arange(1, (end.month+1)).astype(str))
+
+                # create lists for years with months
+                years = [str(start.year)] * len(months_first_year) +  [str(f) for f in full_years]   +  [str(end.year)] * len(months_last_year) 
+                months = months_first_year +  [str(m) for m in all_months ]  * len(full_years_range) +  months_last_year
+
+            else:
+                months = np.arange(start.month, end.month + 1 ).astype(str)
+                nr_of_months = np.shape(months)[0]
+                years = [str(start.year)] * nr_of_months
+
+
 
             for idx,month in enumerate(months):
                 year = years[idx]
-                filename = 'era5_'+ downloadkey +'_'+ year +  month +'_' + ''.join(variables) + '_' + + ','.join(self.domain)+ '.nc'
+                filename = 'era5_'+ downloadkey +'_'+ year +  month +'_' + ''.join(self.variables) + '_' + ','.join(self.domain)+ '.nc'
                 filepath = os.path.join(self.path, filename)
 
                 # check whether file already has been downloaded
@@ -330,7 +339,7 @@ class Surface():
         v= self.obj.v100.values[0,::]
         lons = self.obj.longitude.values
         lats = self.obj.latitude.values
-        plotting.plot_surface_wind(lons, lats, u, v)
+        plotting.plot_surface_wind(lons, lats, u, v, out = out)
 
 
     def create_map(self, variable, out = None):
@@ -348,9 +357,35 @@ class Surface():
 
         var = self.obj[variable].values[0]
         unit= str(self.obj[variable].units)
-        varname = str(self.obj[variable].long_name) 
-        plotting.plot_map(lons, lats, var,varname, unit, out = None )
+        varname = str(self.obj[variable].long_name)
 
+
+        plotting.plot_map(lons, lats, var,varname, unit, out = out )
+
+
+
+    def create_contour_map(self, variable, out = None, filled= None, levels = None):
+        """
+        This function creates a map of a any chosen climate variable from surface/ single-level data. 
+
+        Parameters:
+        ------------
+
+        var(str): short name of variable to plot
+
+        optional:
+
+        filled (boolean): if True, contours with filled regions will be created. The default creates contour lines.
+        levels : array containing the variable values for which contours are drawn
+
+        """
+        lons = self.obj.longitude.values
+        lats = self.obj.latitude.values
+
+        var = self.obj[variable].values[0]
+        unit= str(self.obj[variable].units)
+        varname = str(self.obj[variable].long_name) 
+        plotting.plot_contours(lons, lats, var, varname, out = out , filled = filled, levels = levels)
 
 
 
@@ -403,7 +438,7 @@ class Pressure():
         geopotential= self.obj.z.values[0,::]
         lons = self.obj.longitude.values
         lats = self.obj.latitude.values
-        plotting.plot_synoptic(lons, lats, u, v, geopotential, pl)
+        plotting.plot_synoptic(lons, lats, u, v, geopotential, pl, out = out)
 
 
 
@@ -431,10 +466,7 @@ class Pressure():
 
         unit= str(self.obj[variable].units)
         varname = str(self.obj[variable].long_name)
-        plotting.plot_map(lons, lats, var,varname, unit, out = None )
-
-
-
+        plotting.plot_map(lons, lats, var,varname, unit, out = out )
 
 
 
