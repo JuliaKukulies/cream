@@ -3,7 +3,7 @@
 **Julia Kukulies** 
 
 
-The following classes and methods have been implemented within the scope of the python project course (03 April, 2020). 
+The following classes and methods have been implemented within the scope of the python project course (23 Mar - 3 Apr, 2020). 
 
 
 ## DONE 
@@ -32,7 +32,10 @@ The following classes and methods have been implemented within the scope of the 
 
 - tested all implemented functions
 - created example notebook
-- documentation with doc strings 
+- documentation with doc strings of modules, classes and methods 
+- created test package and uploaded on https://test.pypi.org/ 
+
+
 
 
 # Future extensions of the package could be:
@@ -50,9 +53,9 @@ The following classes and methods have been implemented within the scope of the 
  
 
  
-### methods
+### additional methods
  
- 
+ - download data for specific pressure level range 
 - create timeseries, animation of consecutive timesteps 
 - more time handling utilities, calculate seasonal averages, etc (e.g. combine with some functions of command-line programm **Climate Data Operator**)
 - calculate averages and  handle timesteps 
