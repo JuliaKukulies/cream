@@ -53,7 +53,7 @@ class ERA5():
 
         self.files = [] 
 
-    def get_data_per_year(self, years, months = None, days = None, hours = None):
+    def get_data_per_year(self, years, months = None, days = None, hours = None, pressure_levels= None):
         """Downloads ERA5 data for a specific year or multiple years at hourly or monthly resolution. The output data is stored seperately for each year.
 
         Parameter:
@@ -113,20 +113,57 @@ class ERA5():
                 print('omittted download for ', filename)
 
             else:
-                # send API request for data download
-                c.retrieve('reanalysis-era5-'+ downloadkey , {
-                    "product_type":   producttype,
-                    "format":         "netcdf",
-                    "area":           '/'.join(self.domain), 
-                    "variable":       self.variables,
-                    "year":           year,
-                    "month":          months,
-                    "day":           days,
-                    "time":          hours
-                }, filepath)
+                if pressure_levels== None:
+                    # send API request for data download
+                    c.retrieve('reanalysis-era5-'+ downloadkey , {
+                        "product_type":   producttype,
+                        "format":         "netcdf",
+                        "area":           '/'.join(self.domain), 
+                        "variable":       self.variables,
+                        "year":           year,
+                        "month":          months,
+                        "day":           days,
+                        "time":          hours
+                    }, filepath)
 
-                print('file downloaded and saved as ', filepath)
-                self.files.append(filepath)
+                    print('file downloaded and saved as ', filepath)
+                    self.files.append(filepath)
+
+
+                elif pressure_levels == 'all':
+                    # send API request for data download
+                    c.retrieve('reanalysis-era5-'+ downloadkey , {
+                        "product_type":   producttype,
+                        "format":         "netcdf",
+                        "area":           '/'.join(self.domain), 
+                        "variable":       self.variables,
+                        "pressure_level": ['1', '2', '3','5', '7', '10','20', '30', '50','70', '100', '125','150', '175', '200','225', '250', '300','350', '400', '450','500', '550', '600','650', '700', '750','775', '800', '825','850', '875', '900','925', '950', '975','1000',],
+                        "year":           year,
+                        "month":          months,
+                        "day":           days,
+                        "time":          hours
+                    }, filepath)
+
+                    print('file downloaded and saved as ', filepath)
+                    self.files.append(filepath)
+
+                else:
+                    # send API request for data download
+                    c.retrieve('reanalysis-era5-'+ downloadkey , {
+                        "product_type":   producttype,
+                        "format":         "netcdf",
+                        "area":           '/'.join(self.domain), 
+                        "variable":       self.variables,
+                        "pressure_level": pressure_levels,
+                        "year":           year,
+                        "month":          months,
+                        "day":           days,
+                        "time":          hours
+                    }, filepath)
+
+                    print('file downloaded and saved as ', filepath)
+                    self.files.append(filepath)
+
 
 
 
